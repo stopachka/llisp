@@ -1,8 +1,8 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure {:mvn/version "1.10.3"}
         instaparse/instaparse {:mvn/version "1.4.10"}}
- :aliases  {:repl {:main-opts ["-m" "bel-clojure.core"]
-                   :exec-fn simple-list.core/-main}
+ :aliases  {:repl {:main-opts ["-m" "simple-lisp.core"]
+                   :exec-fn simple-lisp.core/-main}
             :test {:extra-deps {io.github.cognitect-labs/test-runner
                                 {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                  :sha "9e35c979860c75555adaff7600070c60004a0f44"}}
