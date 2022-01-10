@@ -68,7 +68,7 @@
 
 (defn eval-macro [env mac args]
   (let [[_ _ clo] mac
-        transformed-args (eval env (concat [clo] args))]
+        transformed-args (eval env (into [clo] args))]
     (eval env transformed-args)))
 
 ;; ------
@@ -78,12 +78,9 @@
   (let [[f & args] form
         f-evaled (eval env f)]
     (cond
-      (fn? f-evaled)
-      (apply f-evaled (map (partial eval env) args))
-      (closure? f-evaled)
-      (eval-closure env f-evaled (map (partial eval env) args))
-      (macro? f-evaled)
-      (eval-macro env f-evaled args))))
+      (fn? f-evaled) (apply f-evaled (map (partial eval env) args))
+      (closure? f-evaled) (eval-closure env f-evaled (map (partial eval env) args))
+      (macro? f-evaled) (eval-macro env f-evaled args))))
 
 ;; ------
 ;; Env
@@ -113,7 +110,7 @@
     e)
   (eval (env) '(if true 'foo 'bar))
   (eval (env) '(+ 1 2))
-  (eval (env) '((lit clo nil (x) (+ x 1)) 2))
+  (eval (env) '((lit clo nil (x) (+ x 1)) 4))
   (eval (env) '((lit mac (lit clo nil (x) (list 'list nil x))) 1)))
 
 ;; ------
