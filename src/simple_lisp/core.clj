@@ -3,9 +3,6 @@
   (:require [clojure.edn :as edn])
   (:import (java.util HashMap)))
 
-;; ------
-;; Model
-
 (defn seq-starts-with? [starts-with form]
   (and (seqable? form) (= (first form) starts-with)))
 
@@ -22,10 +19,7 @@
 (def literal?
   (some-fn string? number? boolean? char? closure? macro? fn? nil?))
 
-(declare eval)
-
-;; --------------
-;; lookup-symbol
+(declare eval eval-many)
 
 (defn lookup-symbol [{:keys [globe scope]} sym]
   (let [v (some (fn [m]
@@ -35,24 +29,15 @@
     (assert v (format "expected value for sym = %s" sym))
     (first v)))
 
-;; ---------
-;; eval-def
-
 (defn eval-def [env [_ k v]]
   (let [evaled-v (eval env v)]
     (.put (:globe env) k evaled-v)))
-
-;; ------
-;; eval-if
 
 (defn eval-if [env [_ test-form when-true when-false]]
   (let [evaled-v (eval env test-form)]
     (if evaled-v
       (eval env when-true)
       (eval env when-false))))
-
-;; -------------
-;; eval-closure
 
 (defn assign-vars [scope syms args]
   (merge scope (into {} (map vector syms args))))
@@ -65,34 +50,22 @@
     (eval (assoc env :scope new-scope)
           body)))
 
-;; ------
-;; eval-macro
-
 (defn eval-macro [env mac args]
   (let [[_ clo] mac
         transformed-args (eval env (into [clo] args))]
     (eval env transformed-args)))
 
-;; ------
-;; eval-application
-
 (defn eval-application [env form]
   (let [[f & args] form
         f-evaled (eval env f)]
     (cond
-      (fn? f-evaled) (apply f-evaled (map (partial eval env) args))
-      (closure? f-evaled) (eval-closure env f-evaled (map (partial eval env) args))
+      (fn? f-evaled) (apply f-evaled (eval-many env args))
+      (closure? f-evaled) (eval-closure env f-evaled (eval-many env args))
       (macro? f-evaled) (eval-macro env f-evaled args))))
-
-;; ------
-;; Env
 
 (defn env []
   {:globe (HashMap. {'+ + 'list list})
    :scope {}})
-
-;; ------
-;; Eval
 
 (defn eval [env form]
   (cond
@@ -102,6 +75,8 @@
     (def? form) (eval-def env form)
     (if? form) (eval-if env form)
     :else (eval-application env form)))
+
+(defn eval-many [e forms] (map (partial eval e) forms))
 
 (comment
   (eval (env) "foo")
