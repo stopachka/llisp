@@ -22,23 +22,19 @@
 (declare eval eval-many)
 
 (defn lookup-symbol [{:keys [globe scope]} sym]
-  (let [v (some (fn [m]
-                  (when (contains? m sym)
-                    [(get m sym)]))
+  (let [v (some (fn [m] (when (contains? m sym)
+                          [(get m sym)]))
                 [{'scope scope} globe scope])]
     (assert v (format "expected value for sym = %s" sym))
     (first v)))
 
 (defn eval-def [env [_ k v]]
   (assert (symbol? k) (format "expected k = %s to be a symbol" k))
-  (let [evaled-v (eval env v)]
-    (.put (:globe env) k evaled-v)))
+  (.put (:globe env) k (eval env v)))
 
 (defn eval-if [env [_ test-form when-true when-false]]
   (let [evaled-v (eval env test-form)]
-    (if evaled-v
-      (eval env when-true)
-      (eval env when-false))))
+    (eval env (if evaled-v when-true when-false))))
 
 (defn assign-vars [scope syms args]
   (merge scope (into {} (map vector syms args))))
@@ -48,8 +44,7 @@
         _ (assert (= (count syms) (count args))
                   (format "clo %s got too many arguments: %s" clo args))
         new-scope (assign-vars scope syms args)]
-    (eval (assoc env :scope new-scope)
-          body)))
+    (eval (assoc env :scope new-scope) body)))
 
 (defn eval-macro [env mac args]
   (let [[_ clo] mac
@@ -64,9 +59,7 @@
       (closure? f-evaled) (eval-closure env f-evaled (eval-many env args))
       (macro? f-evaled) (eval-macro env f-evaled args))))
 
-(defn env []
-  {:globe (HashMap. {'+ + 'list list})
-   :scope {}})
+(defn env [] {:globe (HashMap. {'+ + 'list list}) :scope {}})
 
 (defn eval [env form]
   (cond
@@ -88,8 +81,7 @@
   (let [e (env)]
     (loop []
       (println "> ")
-      (let [form (read)]
-        (println (eval e form)))
+      (println (eval e (read)))
       (recur))))
 
 (comment
