@@ -30,6 +30,7 @@
     (first v)))
 
 (defn eval-def [env [_ k v]]
+  (assert (symbol? k) (format "expected k = %s to be a symbol" k))
   (let [evaled-v (eval env v)]
     (.put (:globe env) k evaled-v)))
 
@@ -78,6 +79,19 @@
 
 (defn eval-many [e forms] (map (partial eval e) forms))
 
+(def read edn/read)
+
+(def read-string edn/read-string)
+
+(defn -main [& args]
+  (println "Welcome to Simple Lisp!")
+  (let [e (env)]
+    (loop []
+      (println "> ")
+      (let [form (read)]
+        (println (eval e form)))
+      (recur))))
+
 (comment
   (eval (env) "foo")
   (eval (env) 1.2)
@@ -89,14 +103,4 @@
   (eval (env) '(+ 1 2))
   (eval (env) '((clo nil (x) (+ x 1)) 4))
   (eval (env) '((mac (clo nil (x) (list 'list nil x))) 1)))
-
-;; ------
-;; Reader
-
-(def read edn/read)
-
-(def read-string edn/read-string)
-
-(comment
-  (read-string "(defn foo [] (+ 1 2))"))
 
