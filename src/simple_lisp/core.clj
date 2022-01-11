@@ -48,9 +48,10 @@
     (eval (update env :scope merge new-scope) body)))
 
 (defn eval-macro [env mac args]
-  (let [[_ clo] mac
-        transformed-args (eval-closure env clo args)]
-    (eval env transformed-args)))
+  (let [[_ clo] mac]
+    (eval env
+          (eval env
+                (concat [clo] (map (fn [x] (list 'quote x)) args))))))
 
 (defn eval-application [env form]
   (let [[f & args] form
