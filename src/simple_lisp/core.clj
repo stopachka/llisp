@@ -28,9 +28,12 @@
 ;; lookup-symbol
 
 (defn lookup-symbol [{:keys [globe scope]} sym]
-  (let [v (some #(get % sym) [{'scope scope} globe scope])]
+  (let [v (some (fn [m]
+                  (when (contains? m sym)
+                    [(get m sym)]))
+                [{'scope scope} globe scope])]
     (assert v (format "expected value for sym = %s" sym))
-    v))
+    (first v)))
 
 ;; ---------
 ;; eval-def
