@@ -1,6 +1,6 @@
 (ns simple-lisp.core
   (:refer-clojure :exclude [eval read read-string])
-  (:require [clojure.edn :as edn])
+  (:require [clojure.edn :refer [read]])
   (:import (java.util HashMap)))
 
 (defn seq-starts-with? [starts-with form]
@@ -45,7 +45,7 @@
                   (format "syms and args must match syms: %s args: %s"
                           (vec syms) (vec args)))
         new-scope (assign-vars scope syms args)]
-    (eval (assoc env :scope new-scope) body)))
+    (eval (update env :scope merge new-scope) body)))
 
 (defn eval-macro [env mac args]
   (let [[_ clo] mac
@@ -60,7 +60,9 @@
       (closure? f-evaled) (eval-closure env f-evaled (eval-many env args))
       (macro? f-evaled) (eval-macro env f-evaled args))))
 
-(defn env [] {:globe (HashMap. {'+ + 'list list 'quote quote}) :scope {}})
+(defn env [] {:globe (HashMap. {'+ + 'list list 'map map 'concat concat
+                                'first first 'second second})
+              :scope {}})
 
 (defn eval [env form]
   (cond
@@ -72,10 +74,6 @@
     :else (eval-application env form)))
 
 (defn eval-many [e forms] (map (partial eval e) forms))
-
-(def read edn/read)
-
-(def read-string edn/read-string)
 
 (defn -main [& args]
   (println "Welcome to Simple Lisp!")
@@ -96,10 +94,26 @@
   (eval (env) '(+ 1 2))
   (eval (env) '((clo nil (x) (+ x 1)) 4))
   (eval (env) '((mac (clo nil (x) (list 'list nil x))) 1))
+  (eval (env) '(map first '((a b))))
   (let [e (env)]
     (eval-many e
-               ['(def fn (mac (clo nil (args body)
-                                   (list 'clo scope args body))))
+               ['(def defmacro
+                   (mac (clo nil (n args body)
+                             (list 'def n
+                                   (list 'mac
+                                         (list 'clo nil args body))))))
+                '(defmacro fn (args body)
+                   (list 'clo scope args body))
+                '(defmacro defn (n args body)
+                   (list 'def n (list 'fn args body)))
+                '(defmacro let (kvs body)
+                   (concat
+                    (list
+                     (list 'fn (map first kvs) body))
+                    (map second kvs)))
                 '((fn (x)
-                    (fn (y) (+ x y))) 1)])))
+                    ((fn (y) (+ x y)) 2)) 1)
+                '(defn foo (x y) (+ x y))
+                '(foo 1 2)
+                '(let ((x 1) (y 2)) (+ x y))])))
 
