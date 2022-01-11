@@ -1,5 +1,5 @@
 (ns simple-lisp.core
-  (:refer-clojure :exclude [eval])
+  (:refer-clojure :exclude [eval read read-string])
   (:require [clojure.edn :as edn])
   (:import (java.util HashMap)))
 
@@ -9,19 +9,18 @@
 (defn seq-starts-with? [starts-with form]
   (and (seqable? form) (= (first form) starts-with)))
 
-(def lit? (partial seq-starts-with? 'lit))
-
 (def quote? (partial seq-starts-with? 'quote))
 
 (def def? (partial seq-starts-with? 'def))
 
 (def if? (partial seq-starts-with? 'if))
 
-(defn closure? [form] (and (lit? form) (= (second form) 'clo)))
-(defn macro? [form] (and (lit? form) (= (second form) 'mac)))
+(def closure? (partial seq-starts-with? 'clo))
 
-(defn literal? [form]
-  ((some-fn string? number? boolean? char? lit? fn? nil?) form))
+(def macro? (partial seq-starts-with? 'mac))
+
+(def literal?
+  (some-fn string? number? boolean? char? closure? macro? fn? nil?))
 
 (declare eval)
 
@@ -56,7 +55,7 @@
   (merge scope (into {} (map vector syms args))))
 
 (defn eval-closure [env clo args]
-  (let [[_ _ scope syms body] clo
+  (let [[_ scope syms body] clo
         _ (assert (= (count syms) (count args))
                   (format "clo %s got too many arguments: %s" clo args))
         new-scope (assign-vars scope syms args)]
@@ -67,7 +66,7 @@
 ;; eval-macro
 
 (defn eval-macro [env mac args]
-  (let [[_ _ clo] mac
+  (let [[_ clo] mac
         transformed-args (eval env (into [clo] args))]
     (eval env transformed-args)))
 
@@ -104,20 +103,22 @@
 (comment
   (eval (env) "foo")
   (eval (env) 1.2)
-  (eval (env) '(lit clo nil (x) (+ 1 x)))
+  (eval (env) '(clo nil (x) (+ 1 x)))
   (let [e (env)]
-    (eval e (quote (def foo 'bar)))
+    (eval e '(def foo 'bar))
     e)
   (eval (env) '(if true 'foo 'bar))
   (eval (env) '(+ 1 2))
-  (eval (env) '((lit clo nil (x) (+ x 1)) 4))
-  (eval (env) '((lit mac (lit clo nil (x) (list 'list nil x))) 1)))
+  (eval (env) '((clo nil (x) (+ x 1)) 4))
+  (eval (env) '((mac (clo nil (x) (list 'list nil x))) 1)))
 
 ;; ------
 ;; Reader
 
-(def parse edn/read-string)
+(def read edn/read)
+
+(def read-string edn/read-string)
 
 (comment
-  (parse "(defn foo [] (+ 1 2))"))
+  (read-string "(defn foo [] (+ 1 2))"))
 
