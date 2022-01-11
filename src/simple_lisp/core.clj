@@ -42,13 +42,14 @@
 (defn eval-closure [env clo args]
   (let [[_ scope syms body] clo
         _ (assert (= (count syms) (count args))
-                  (format "clo %s got too many arguments: %s" clo args))
+                  (format "syms and args must match syms: %s args: %s"
+                          (vec syms) (vec args)))
         new-scope (assign-vars scope syms args)]
     (eval (assoc env :scope new-scope) body)))
 
 (defn eval-macro [env mac args]
   (let [[_ clo] mac
-        transformed-args (eval env (into [clo] args))]
+        transformed-args (eval-closure env clo args)]
     (eval env transformed-args)))
 
 (defn eval-application [env form]
@@ -59,7 +60,7 @@
       (closure? f-evaled) (eval-closure env f-evaled (eval-many env args))
       (macro? f-evaled) (eval-macro env f-evaled args))))
 
-(defn env [] {:globe (HashMap. {'+ + 'list list}) :scope {}})
+(defn env [] {:globe (HashMap. {'+ + 'list list 'quote quote}) :scope {}})
 
 (defn eval [env form]
   (cond
@@ -94,5 +95,11 @@
   (eval (env) '(if true 'foo 'bar))
   (eval (env) '(+ 1 2))
   (eval (env) '((clo nil (x) (+ x 1)) 4))
-  (eval (env) '((mac (clo nil (x) (list 'list nil x))) 1)))
+  (eval (env) '((mac (clo nil (x) (list 'list nil x))) 1))
+  (let [e (env)]
+    (eval-many e
+               ['(def fn (mac (clo nil (args body)
+                                   (list 'clo scope args body))))
+                '((fn (x)
+                    (fn (y) (+ x y))) 1)])))
 
