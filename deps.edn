@@ -1,6 +1,5 @@
 {:paths ["src" "resources"]
- :deps {org.clojure/clojure {:mvn/version "1.10.3"}
-        instaparse/instaparse {:mvn/version "1.4.10"}}
+ :deps {org.clojure/clojure {:mvn/version "1.10.3"}}
  :aliases  {:repl {:main-opts ["-m" "simple-lisp.core"]
                    :exec-fn simple-lisp.core/-main}
             :test {:extra-deps {io.github.cognitect-labs/test-runner
