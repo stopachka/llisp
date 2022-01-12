@@ -45,7 +45,7 @@
                   (format "syms and args must match syms: %s args: %s"
                           (vec syms) (vec args)))
         new-scope (assign-vars scope syms args)]
-    (eval (update env :scope merge new-scope) body)))
+    (eval (assoc env :scope new-scope) body)))
 
 (defn eval-macro [env mac args]
   (let [[_ clo] mac]
@@ -105,16 +105,9 @@
                                          (list 'clo nil args body))))))
                 '(defmacro fn (args body)
                    (list 'clo scope args body))
-                '(defmacro defn (n args body)
-                   (list 'def n (list 'fn args body)))
-                '(defmacro let (kvs body)
-                   (concat
-                    (list
-                     (list 'fn (map first kvs) body))
-                    (map second kvs)))
+                ;; ERROR:
+                ;; `fn` does not seem to expand where I expect
+                ;; I expect `scope` to contain the value for `x`, but it does not
                 '((fn (x)
-                    ((fn (y) (+ x y)) 2)) 1)
-                '(defn foo (x y) (+ x y))
-                '(foo 1 2)
-                '(let ((x 1) (y 2)) (+ x y))])))
+                    ((fn (y) (+ x y)) 2)) 1)])))
 
