@@ -98,16 +98,18 @@
   (eval (env) '(map first '((a b))))
   (let [e (env)]
     (eval-many e
-               ['(def defmacro
-                   (mac (clo nil (n args body)
-                             (list 'def n
-                                   (list 'mac
-                                         (list 'clo nil args body))))))
-                '(defmacro fn (args body)
-                   (list 'clo scope args body))
+               ['((clo nil (x)
+                       (((list 'mac (list
+                                     'clo
+                                     scope
+                                     '(args body)
+                                     '(list 'clo scope
+                                            args
+                                            body)))
+                         (y) (+ x y)) 2)) 1)
                 ;; ERROR:
                 ;; `fn` does not seem to expand where I expect
                 ;; I expect `scope` to contain the value for `x`, but it does not
-                '((fn (x)
-                    ((fn (y) (+ x y)) 2)) 1)])))
+                '((clo nil (x)
+                       ((list 'clo scope '(y) '(+ x y)) 2)) 1)])))
 
