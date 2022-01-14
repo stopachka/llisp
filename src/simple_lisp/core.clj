@@ -83,7 +83,6 @@
       (println "> ")
       (println (eval e (read)))
       (recur))))
-
 (comment
   (eval (env) "foo")
   (eval (env) 1.2)
@@ -99,15 +98,14 @@
   (let [e (env)]
     (eval-many e
                ['(def defmacro
-                   (mac (clo nil (n args body)
+                   (mac (clo nil (n p e)
                              (list 'def n
-                                   (list 'mac
-                                         (list 'clo nil args body))))))
+                                   (list 'quote
+                                         (list 'mac (list 'clo nil p e)))))))
+
                 '(defmacro fn (args body)
-                   (list 'clo scope args body))
-                ;; ERROR:
-                ;; `fn` does not seem to expand where I expect
-                ;; I expect `scope` to contain the value for `x`, but it does not
-                '((fn (x)
-                    ((fn (y) (+ x y)) 2)) 1)])))
+                   (list 'list ''clo 'scope
+                         (list 'quote args)
+                         (list 'quote body)))
+                '(((fn (x) (fn (y) (+ x y))) 1) 2)])))
 
