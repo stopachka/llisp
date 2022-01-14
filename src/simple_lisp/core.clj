@@ -102,11 +102,11 @@
                          (list 'quote args)
                          (list 'quote body)))
                 '(defmacro let (pairs body)
-                   (concat
-                    [(list 'fn
-                          (map first pairs)
-                          body)]
-                    (map second pairs)))
+                   (concat (list (list 'fn (map first pairs) body))
+                           (map second pairs)))
                 '(((fn (x) (fn (y) (+ x y))) 1) 2)
-                '(let ((x 1) (y 2)) (+ x y))])))
+                '((fn (z)
+                    (let ((x 1) (y 2)) (+ x y z))) 3)
+
+                ])))
 
