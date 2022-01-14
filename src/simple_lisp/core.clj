@@ -100,9 +100,7 @@
                ['(def defmacro
                    (mac (clo nil (n p e)
                              (list 'def n
-                                   (list 'quote
-                                         (list 'mac (list 'clo nil p e)))))))
-
+                                   (list 'mac (list 'clo nil p e))))))
                 '(defmacro fn (args body)
                    (list 'list ''clo 'scope
                          (list 'quote args)
