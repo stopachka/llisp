@@ -35,14 +35,14 @@
   (let [evaled-test (eval env test-form)]
     (eval env (if evaled-test when-true when-false))))
 
-(defn assign-vars [scope syms args]
-  (merge scope (into {} (map vector syms args))))
-
-(defn eval-closure [env [_ scope syms body] args]
+(defn assign-vars [syms args]
   (assert (= (count syms) (count args))
           (format "syms and args must match syms: %s args: %s"
                   (vec syms) (vec args)))
-  (eval (assoc env :scope (assign-vars scope syms args)) body))
+  (into {} (map vector syms args)))
+
+(defn eval-closure [env [_ scope syms body] args]
+  (eval (assoc env :scope (merge scope (assign-vars syms args))) body))
 
 (defn eval-macro [env [_ clo] args]
   (eval env
@@ -56,8 +56,8 @@
       (closure? f-evaled) (eval-closure env f-evaled (eval-many env args))
       (macro? f-evaled) (eval-macro env f-evaled args))))
 
-(defn env [] {:globe (HashMap. {'+ + 'list list 'map map 'concat concat
-                                'first first 'second second})
+(defn env [] {:globe (HashMap. {'+ + '= = 'list list 'map map 'concat concat
+                                'first first 'second second 'not not})
               :scope {}})
 
 (defn eval [env form]
@@ -106,7 +106,5 @@
                            (map second pairs)))
                 '(((fn (x) (fn (y) (+ x y))) 1) 2)
                 '((fn (z)
-                    (let ((x 1) (y 2)) (+ x y z))) 3)
-
-                ])))
+                    (let ((x 1) (y 2)) (+ x y z))) 3)])))
 
