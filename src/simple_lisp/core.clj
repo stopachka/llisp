@@ -47,7 +47,7 @@
 (defn eval-macro [env [_ clo] args]
   (eval env
         (eval env
-              (concat [clo] (map (fn [x] (list 'quote x)) args)))))
+              (concat [clo] (map (partial list 'quote) args)))))
 
 (defn eval-application [env [f & args]]
   (let [f-evaled (eval env f)]
