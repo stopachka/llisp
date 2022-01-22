@@ -1,4 +1,4 @@
-(ns simple-lisp.core
+(ns llisp.core
   (:refer-clojure :exclude [eval read read-string])
   (:require [clojure.edn :refer [read]])
   (:import (java.util HashMap)))
@@ -72,7 +72,7 @@
 (defn eval-many [e forms] (map (partial eval e) forms))
 
 (defn -main [& args]
-  (println "Welcome to Simple Lisp!")
+  (println "Welcome to Llisp!")
   (let [e (env)]
     (loop []
       (println "> ")
